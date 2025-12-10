@@ -48,16 +48,39 @@ export async function generateWordsForPuzzle(
       : buildWordsearchPrompt(theme, wordCount, config.width);
   }
 
-  try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+  // Implementa retry com backoff exponencial
+  const maxRetries = 3;
+  let lastError: Error | null = null;
 
-    return parseGeminiResponse(text, gameType);
-  } catch (error) {
-    console.error('Erro ao gerar palavras:', error);
-    throw new Error('Falha ao gerar palavras com Gemini');
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      const parsed = parseGeminiResponse(text, gameType);
+
+      // Valida se retornou número adequado de palavras
+      if (parsed.words.length < wordCount * 0.5) {
+        console.warn(`Tentativa ${attempt + 1}: Gemini retornou apenas ${parsed.words.length}/${wordCount} palavras`);
+        if (attempt < maxRetries - 1) {
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // backoff
+          continue;
+        }
+      }
+
+      return parsed;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Erro desconhecido');
+      console.error(`Tentativa ${attempt + 1} falhou:`, lastError.message);
+
+      if (attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); // backoff
+      }
+    }
   }
+
+  throw lastError || new Error('Falha ao gerar palavras com Gemini após múltiplas tentativas');
 }
 
 /**
@@ -311,16 +334,37 @@ VERIFICAÇÃO FINAL:
 function parseGeminiResponse(text: string, gameType: GameType): GeminiWordResponse {
   try {
     // Remove possíveis backticks de código
-    const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    let cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // Tenta extrair JSON mesmo se estiver dentro de texto
+    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedText = jsonMatch[0];
+    }
+
+    // Limpa caracteres problemáticos
+    cleanedText = cleanedText
+      .replace(/[\x00-\x1F]/g, '') // remove caracteres de controle
+      .replace(/,\s*\}/g, '}') // remove trailing commas em objetos
+      .replace(/,\s*\]/g, ']'); // remove trailing commas em arrays
+
     const parsed = JSON.parse(cleanedText);
 
-    const words: GeneratedWord[] = parsed.words.map((w: { word: string; clue: string }) => ({
-      word: w.word.toUpperCase().replace(/[^A-Z]/g, ''),
-      clue: w.clue || '',
-      selected: true,
-    }));
+    // Processa e valida palavras
+    const words: GeneratedWord[] = (parsed.words || [])
+      .map((w: { word: string; clue?: string }) => ({
+        word: w.word?.toUpperCase().replace(/[^A-Z]/g, '') || '',
+        clue: (w.clue || '').substring(0, 80), // limita pista a 80 chars
+        selected: true,
+      }))
+      .filter((w: GeneratedWord) => w.word.length >= 3) // remove palavras muito curtas
+      .filter((w: GeneratedWord, i: number, arr: GeneratedWord[]) =>
+        arr.findIndex(x => x.word === w.word) === i // remove duplicatas
+      );
 
     const description = parsed.description || '';
+
+    console.log(`Gemini retornou ${words.length} palavras válidas`);
 
     return {
       words,
@@ -328,6 +372,7 @@ function parseGeminiResponse(text: string, gameType: GameType): GeminiWordRespon
     };
   } catch (error) {
     console.error('Erro ao parsear resposta:', error);
+    console.error('Texto recebido:', text.substring(0, 500));
     throw new Error('Resposta inválida do Gemini');
   }
 }

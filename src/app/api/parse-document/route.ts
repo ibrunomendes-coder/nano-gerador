@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
       const buffer = Buffer.from(arrayBuffer);
 
       // Importar dinamicamente para evitar problemas de SSR
-      const pdfParse = (await import('pdf-parse')).default;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require('pdf-parse');
       const pdfData = await pdfParse(buffer);
       text = pdfData.text;
     } else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {

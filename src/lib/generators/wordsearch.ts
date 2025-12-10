@@ -28,6 +28,9 @@ export function generateWordSearch(
   const { width, height } = config;
   const selectedWords = words.filter(w => w.selected).map(w => w.word);
 
+  // Ordena palavras por tamanho DECRESCENTE (maiores primeiro têm mais chance de caber)
+  const sortedWords = [...selectedWords].sort((a, b) => b.length - a.length);
+
   // Cria a grade vazia
   const grid: string[][] = Array(height)
     .fill(null)
@@ -38,14 +41,24 @@ export function generateWordSearch(
     .fill(null)
     .map(() => Array(width).fill('-'));
 
-  // Tenta posicionar cada palavra
+  // Tenta posicionar cada palavra (aumentado para 200 tentativas)
   const placedWords: string[] = [];
+  const failedWords: string[] = [];
 
-  for (const word of selectedWords) {
+  for (const word of sortedWords) {
     const placed = placeWord(grid, answerGrid, word, width, height);
     if (placed) {
       placedWords.push(word);
+    } else {
+      failedWords.push(word);
     }
+  }
+
+  // Log de resultado
+  if (failedWords.length > 0) {
+    console.warn(`=== CAÇA-PALAVRAS: ${failedWords.length} palavras não couberam ===`);
+    console.warn(`Colocadas: ${placedWords.length}/${sortedWords.length}`);
+    console.warn(`Falharam: ${failedWords.join(', ')}`);
   }
 
   // Preenche espaços vazios com letras aleatórias
@@ -60,7 +73,7 @@ export function generateWordSearch(
     description,
     content,
     answer,
-    suggestions: placedWords,
+    suggestions: placedWords, // APENAS palavras que foram realmente colocadas
   };
 }
 
@@ -71,8 +84,8 @@ function placeWord(
   width: number,
   height: number
 ): boolean {
-  // Tenta até 100 vezes posicionar a palavra
-  for (let attempt = 0; attempt < 100; attempt++) {
+  // Tenta até 200 vezes posicionar a palavra
+  for (let attempt = 0; attempt < 200; attempt++) {
     const direction = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
     const [dy, dx] = direction;
 

@@ -25,8 +25,25 @@ export default function WordList({
 
   const updateWord = (index: number, field: 'word' | 'clue', value: string) => {
     const newWords = [...words];
-    newWords[index] = { ...newWords[index], [field]: value.toUpperCase() };
+    if (field === 'word') {
+      // Sanitiza: apenas letras maiúsculas, sem acentos/caracteres especiais
+      const sanitized = value.toUpperCase().replace(/[^A-Z]/g, '');
+      newWords[index] = { ...newWords[index], word: sanitized };
+    } else {
+      newWords[index] = { ...newWords[index], clue: value };
+    }
     setWords(newWords);
+  };
+
+  // Verifica se uma palavra tem problemas
+  const getWordError = (word: GeneratedWord, index: number): string | null => {
+    if (!word.word || word.word.length === 0) return 'Palavra vazia';
+    if (word.word.length < 3) return 'Mínimo 3 letras';
+    if (word.word.length > 15) return 'Máximo 15 letras';
+    // Verifica duplicatas
+    const duplicateIndex = words.findIndex((w, i) => i !== index && w.word === word.word);
+    if (duplicateIndex !== -1) return 'Duplicada';
+    return null;
   };
 
   const removeWord = (index: number) => {
@@ -39,22 +56,34 @@ export default function WordList({
   };
 
   const selectedCount = words.filter((w) => w.selected).length;
+  const errorCount = words.filter((w, i) => w.selected && getWordError(w, i)).length;
 
   return (
     <div className="bg-white p-6 md:p-8">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-medium text-neutral-900">Palavras Geradas</h2>
-        <span className="text-sm text-neutral-500">
-          {selectedCount} de {words.length} selecionadas
-        </span>
+        <div className="flex items-center gap-4">
+          {errorCount > 0 && (
+            <span className="text-sm text-red-600 font-medium">
+              {errorCount} com erro
+            </span>
+          )}
+          <span className="text-sm text-neutral-500">
+            {selectedCount} de {words.length} selecionadas
+          </span>
+        </div>
       </div>
 
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
-        {words.map((word, index) => (
+      <div className="space-y-3 max-h-[500px] overflow-y-auto">
+        {words.map((word, index) => {
+          const error = getWordError(word, index);
+          return (
           <div
             key={index}
             className={`p-4 border transition-all ${
-              word.selected
+              error && word.selected
+                ? 'border-red-400 bg-red-50'
+                : word.selected
                 ? 'border-[#7B9E89] bg-[#7B9E89]/5'
                 : 'border-neutral-200 bg-neutral-50 opacity-60'
             }`}
@@ -82,13 +111,20 @@ export default function WordList({
 
               {/* Campos */}
               <div className="flex-1 space-y-2">
-                <input
-                  type="text"
-                  value={word.word}
-                  onChange={(e) => updateWord(index, 'word', e.target.value)}
-                  placeholder="PALAVRA"
-                  className="w-full px-3 py-2 text-sm font-mono font-bold border border-neutral-200 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#7B9E89] focus:border-transparent"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={word.word}
+                    onChange={(e) => updateWord(index, 'word', e.target.value)}
+                    placeholder="PALAVRA"
+                    className={`flex-1 px-3 py-2 text-sm font-mono font-bold border text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#7B9E89] focus:border-transparent ${
+                      error ? 'border-red-400' : 'border-neutral-200'
+                    }`}
+                  />
+                  {error && (
+                    <span className="text-xs text-red-500 whitespace-nowrap">{error}</span>
+                  )}
+                </div>
                 {gameType === 'crossword' && (
                   <input
                     type="text"
@@ -153,7 +189,8 @@ export default function WordList({
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {/* Adicionar Palavra */}
