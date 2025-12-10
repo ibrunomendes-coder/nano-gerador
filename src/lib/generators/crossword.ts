@@ -81,12 +81,16 @@ export function generateCrossword(
       return acc + countWordIntersections(result.grid, pw);
     }, 0);
 
-    // Bonus por balanceamento H/V
+    // Balanceamento H/V é CRÍTICO - penaliza fortemente desbalanceamento
     const hCount = result.placedWords.filter(p => p.direction === 'horizontal').length;
     const vCount = result.placedWords.filter(p => p.direction === 'vertical').length;
-    const balanceBonus = Math.min(hCount, vCount) * 20;
+    const difference = Math.abs(hCount - vCount);
 
-    const score = (filledCells * filledCells) + (intersectionScore * 5) + balanceBonus;
+    // Bonus alto por balanceamento, penalidade por diferença
+    const balanceBonus = Math.min(hCount, vCount) * 50; // Aumentado de 20 para 50
+    const balancePenalty = difference * difference * 10; // Penalidade quadrática
+
+    const score = (filledCells * filledCells) + (intersectionScore * 5) + balanceBonus - balancePenalty;
 
     if (!bestResult || score > bestResult.score) {
       bestResult = { ...result, score };
@@ -193,23 +197,34 @@ function tryPlaceWords(
     }
   }
 
+  // Calcula quantas palavras de cada direção precisamos
+  const targetH = Math.ceil(targetTotal / 2);
+  const targetV = Math.floor(targetTotal / 2);
+
   // Coloca resto das palavras - OBRIGATÓRIO ter interseção
   // Faz MUITAS passagens (5) para maximizar preenchimento
   let lastPlacedCount = 0;
   let passes = 0;
   const maxPasses = 5;
 
-  // Alterna preferência de direção para balancear
-  let preferDirection: 'horizontal' | 'vertical' = 'horizontal';
-
   while (placedWords.length < targetTotal && passes < maxPasses) {
     passes++;
     lastPlacedCount = placedWords.length;
 
-    // Conta direções atuais para balancear
+    // Conta direções atuais para FORÇAR balanceamento
     const hCount = placedWords.filter(p => p.direction === 'horizontal').length;
     const vCount = placedWords.filter(p => p.direction === 'vertical').length;
-    preferDirection = hCount > vCount ? 'vertical' : 'horizontal';
+
+    // Determina qual direção PRECISA de mais palavras
+    let requiredDirection: 'horizontal' | 'vertical' | null = null;
+    if (hCount < targetH && vCount >= targetV) {
+      requiredDirection = 'horizontal'; // Precisa de mais horizontais
+    } else if (vCount < targetV && hCount >= targetH) {
+      requiredDirection = 'vertical'; // Precisa de mais verticais
+    }
+
+    // Direção preferida (a que tem menos)
+    const preferDirection = hCount > vCount ? 'vertical' : 'horizontal';
 
     for (let i = 0; i < wordsToPlace.length && placedWords.length < targetTotal; i++) {
       const wordData = wordsToPlace[i];
@@ -228,9 +243,31 @@ function tryPlaceWords(
         continue;
       }
 
-      // Separa por direção preferida
-      const preferred = withIntersection.filter(p => p.direction === preferDirection);
-      const candidates = preferred.length > 0 ? preferred : withIntersection;
+      // Atualiza contagem para verificar se já atingiu limite de uma direção
+      const currentH = placedWords.filter(p => p.direction === 'horizontal').length;
+      const currentV = placedWords.filter(p => p.direction === 'vertical').length;
+
+      // Se uma direção já atingiu o limite, FORÇA a outra
+      let candidates: Placement[];
+      if (currentH >= targetH) {
+        // Só aceita vertical
+        candidates = withIntersection.filter(p => p.direction === 'vertical');
+      } else if (currentV >= targetV) {
+        // Só aceita horizontal
+        candidates = withIntersection.filter(p => p.direction === 'horizontal');
+      } else if (requiredDirection) {
+        // Prefere a direção necessária, mas aceita outra se não houver
+        const required = withIntersection.filter(p => p.direction === requiredDirection);
+        candidates = required.length > 0 ? required : withIntersection;
+      } else {
+        // Prefere a direção com menos palavras
+        const preferred = withIntersection.filter(p => p.direction === preferDirection);
+        candidates = preferred.length > 0 ? preferred : withIntersection;
+      }
+
+      if (candidates.length === 0) {
+        continue;
+      }
 
       // Ordena por número de interseções (mais é melhor)
       candidates.sort((a, b) => b.intersections - a.intersections);
@@ -258,12 +295,14 @@ function tryPlaceWords(
     }
   }
 
-  // Validação: garante que temos pelo menos palavras em ambas as direções
+  // Validação: garante que temos palavras balanceadas em ambas as direções
   const hCount = placedWords.filter(p => p.direction === 'horizontal').length;
   const vCount = placedWords.filter(p => p.direction === 'vertical').length;
 
   if (hCount === 0 || vCount === 0) {
     console.warn(`AVISO: Cruzada unidirecional! H=${hCount}, V=${vCount}`);
+  } else if (Math.abs(hCount - vCount) > 2) {
+    console.warn(`AVISO: Desbalanceado! H=${hCount}, V=${vCount} (diferença: ${Math.abs(hCount - vCount)})`);
   }
 
   return { grid, placedWords };
