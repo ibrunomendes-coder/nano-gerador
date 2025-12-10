@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateWordsForPuzzle, SourceType } from '@/lib/gemini';
+import { generateWordsForPuzzle, generateAdditionalWords, SourceType } from '@/lib/gemini';
 import { GameType, Difficulty } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { gameType, difficulty, theme, sourceType, documentText } = body as {
+    const { gameType, difficulty, theme, sourceType, documentText, additionalCount, existingWords } = body as {
       gameType: GameType;
       difficulty: Difficulty;
       theme: string;
       sourceType?: SourceType;
       documentText?: string | null;
+      additionalCount?: number;
+      existingWords?: string[];
     };
 
     if (!gameType || !difficulty) {
@@ -44,6 +46,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Se é para gerar mais palavras (adicional)
+    if (additionalCount && existingWords) {
+      const result = await generateAdditionalWords(
+        gameType,
+        theme || '',
+        existingWords,
+        additionalCount,
+        source,
+        documentText
+      );
+      return NextResponse.json(result);
+    }
+
+    // Geração normal
     const result = await generateWordsForPuzzle(
       gameType,
       difficulty,

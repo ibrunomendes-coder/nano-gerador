@@ -420,6 +420,71 @@ Responda APENAS com o parágrafo, sem explicações.`;
 }
 
 /**
+ * Gera palavras adicionais para um tema já existente
+ * Evita palavras que já existem na lista
+ */
+export async function generateAdditionalWords(
+  gameType: GameType,
+  theme: string,
+  existingWords: string[],
+  count: number,
+  sourceType: SourceType = 'gemini',
+  documentText?: string | null
+): Promise<GeminiWordResponse> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+  const existingList = existingWords.join(', ');
+  const needClue = gameType === 'crossword';
+
+  let contextInfo = '';
+  if (sourceType !== 'gemini' && documentText) {
+    const truncatedDoc = documentText.substring(0, 10000);
+    contextInfo = `\n\nCONTEXTO DO DOCUMENTO:\n${truncatedDoc}\n`;
+  }
+
+  const prompt = `Gere ${count} palavras NOVAS em português brasileiro sobre o tema "${theme}".
+${contextInfo}
+PALAVRAS QUE JÁ EXISTEM (NÃO REPITA):
+${existingList}
+
+REQUISITOS:
+- Gere EXATAMENTE ${count} palavras NOVAS
+- Palavras entre 4 e 12 letras
+- Apenas letras maiúsculas (sem acentos: Á→A, É→E, Í→I, Ó→O, Ú→U, Ç→C)
+- Sem espaços ou hífens
+- NÃO repita nenhuma palavra da lista acima
+${needClue ? '- Cada palavra deve ter uma pista/definição curta (máximo 60 caracteres)' : ''}
+
+Responda APENAS em JSON:
+{
+  "words": [
+    {"word": "PALAVRA1", "clue": "${needClue ? 'Definição curta' : ''}"}
+  ]
+}`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    const parsed = parseGeminiResponse(text, gameType);
+
+    // Filtra palavras que já existem
+    const filteredWords = parsed.words.filter(
+      w => !existingWords.includes(w.word) && w.word.length >= 3
+    );
+
+    return {
+      words: filteredWords,
+      description: parsed.description,
+    };
+  } catch (error) {
+    console.error('Erro ao gerar palavras adicionais:', error);
+    throw new Error('Falha ao gerar palavras adicionais');
+  }
+}
+
+/**
  * Regenera uma palavra específica
  */
 export async function regenerateWord(

@@ -43,6 +43,7 @@ export default function Home() {
   const [words, setWords] = useState<GeneratedWord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState<number | null>(null);
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
 
   // Descrição educativa (para caça-palavras)
   const [description, setDescription] = useState('');
@@ -96,6 +97,55 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Gera mais palavras (adiciona às existentes)
+  const handleGenerateMore = async (count: number = 5) => {
+    setIsGeneratingMore(true);
+    setError(null);
+
+    try {
+      const existingWords = words.map(w => w.word);
+
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameType,
+          difficulty,
+          theme,
+          sourceType,
+          documentText,
+          additionalCount: count,
+          existingWords, // Para evitar duplicatas
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao gerar mais palavras');
+      }
+
+      // Filtra palavras que já existem e adiciona as novas
+      const newWords = data.words
+        .filter((w: GeneratedWord) => !existingWords.includes(w.word))
+        .map((w: GeneratedWord) => ({
+          ...w,
+          selected: true,
+        }));
+
+      if (newWords.length === 0) {
+        setError('Não foi possível gerar palavras novas. Tente novamente.');
+        return;
+      }
+
+      setWords([...words, ...newWords]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setIsGeneratingMore(false);
     }
   };
 
@@ -346,6 +396,54 @@ export default function Home() {
               onRegenerate={handleRegenerate}
               isRegenerating={isRegenerating}
             />
+
+            {/* Botão para gerar mais palavras */}
+            <div className="bg-white p-4 border-t border-neutral-100">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-500">
+                  Precisa de mais palavras?
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleGenerateMore(5)}
+                    disabled={isGeneratingMore}
+                    className={`px-4 py-2 text-sm font-medium transition-all flex items-center gap-2 ${
+                      isGeneratingMore
+                        ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                        : 'bg-[#7B9E89] text-white hover:bg-[#6B8E79]'
+                    }`}
+                  >
+                    {isGeneratingMore ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Gerando...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        +5 Palavras
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateMore(10)}
+                    disabled={isGeneratingMore}
+                    className={`px-4 py-2 text-sm font-medium transition-all ${
+                      isGeneratingMore
+                        ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                        : 'border border-[#7B9E89] text-[#7B9E89] hover:bg-[#7B9E89]/10'
+                    }`}
+                  >
+                    +10 Palavras
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* Descrição educativa (apenas para caça-palavras) */}
             {gameType === 'wordsearch' && (
