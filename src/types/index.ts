@@ -18,15 +18,17 @@ export interface GridConfig {
 }
 
 // Configurações padrão por tipo de jogo e dificuldade
-// Cruzadas: valores REALISTAS baseados em capacidade real da grade
-// - Grid 5x5 = 25 células, suporta ~4-6 palavras com interseções
-// - Grid 10x10 = 100 células, suporta ~12-18 palavras
-// - Grid 13x13 = 169 células, suporta ~20-28 palavras
+// Cruzadas: grades maiores para MAXIMIZAR palavras e MINIMIZAR blocos pretos
+// Objetivo: densidade de letras > 90%, blocos pretos < 10%
+// Referência: Desafio Mestre 13x13 tem 56 palavras com 8% de blocos
 export const GRID_CONFIGS: Record<GameType, Record<Difficulty, GridConfig>> = {
   crossword: {
-    easy: { width: 7, height: 7, minWords: 4, maxWords: 8, horizontalWords: 4, verticalWords: 4, estimatedTime: 3 },
-    medium: { width: 11, height: 11, minWords: 10, maxWords: 16, horizontalWords: 8, verticalWords: 8, estimatedTime: 8 },
-    hard: { width: 15, height: 15, minWords: 18, maxWords: 28, horizontalWords: 14, verticalWords: 14, estimatedTime: 15 },
+    // Easy: 9x9 = 81 células, ~12-16 palavras, múltiplas palavras por linha
+    easy: { width: 9, height: 9, minWords: 12, maxWords: 16, horizontalWords: 7, verticalWords: 7, estimatedTime: 5 },
+    // Medium: 13x13 = 169 células, ~30-40 palavras (similar Desafio Mestre)
+    medium: { width: 13, height: 13, minWords: 30, maxWords: 40, horizontalWords: 18, verticalWords: 18, estimatedTime: 12 },
+    // Hard: 17x17 = 289 células, ~50-65 palavras, alta densidade
+    hard: { width: 17, height: 17, minWords: 50, maxWords: 65, horizontalWords: 30, verticalWords: 30, estimatedTime: 20 },
   },
   wordsearch: {
     easy: { width: 10, height: 10, minWords: 5, maxWords: 7, estimatedTime: 3 },

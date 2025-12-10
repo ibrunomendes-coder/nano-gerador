@@ -26,6 +26,7 @@ interface Placement {
 
 /**
  * Gera uma cruzada DENSA - minimizando blocos pretos e maximizando interseções
+ * Estratégia: múltiplas tentativas, prioriza densidade máxima
  */
 export function generateCrossword(
   words: GeneratedWord[],
@@ -44,31 +45,57 @@ export function generateCrossword(
   // Ordena por tamanho DECRESCENTE - palavras maiores primeiro (mais oportunidades de interseção)
   const sortedByLength = [...selectedWords].sort((a, b) => b.word.length - a.word.length);
 
-  // Tenta múltiplas vezes com diferentes ordenações
+  // Tenta múltiplas vezes com diferentes ordenações - AUMENTADO para 10 tentativas
   let bestResult: { grid: (string | null)[][]; placedWords: PlacedWord[]; score: number } | null = null;
 
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const wordsToTry = attempt === 0
-      ? sortedByLength
-      : [...sortedByLength].sort(() => Math.random() - 0.5);
+  for (let attempt = 0; attempt < 10; attempt++) {
+    // Estratégias diferentes de ordenação
+    let wordsToTry: { word: string; clue: string }[];
+
+    if (attempt === 0) {
+      // Primeira: maiores primeiro
+      wordsToTry = sortedByLength;
+    } else if (attempt === 1) {
+      // Segunda: menores primeiro (podem preencher espaços)
+      wordsToTry = [...sortedByLength].reverse();
+    } else if (attempt === 2) {
+      // Terceira: alternando grandes e pequenas
+      const half = Math.ceil(sortedByLength.length / 2);
+      wordsToTry = [];
+      for (let i = 0; i < half; i++) {
+        if (sortedByLength[i]) wordsToTry.push(sortedByLength[i]);
+        if (sortedByLength[sortedByLength.length - 1 - i]) {
+          wordsToTry.push(sortedByLength[sortedByLength.length - 1 - i]);
+        }
+      }
+    } else {
+      // Restante: shuffle aleatório
+      wordsToTry = [...sortedByLength].sort(() => Math.random() - 0.5);
+    }
 
     const result = tryPlaceWords(wordsToTry, width, height, targetTotal);
 
-    // Score = número de células preenchidas (quanto mais, melhor - menos blocos pretos)
+    // Score = células preenchidas^2 + interseções * 5 (prioriza densidade)
     const filledCells = result.grid.flat().filter(c => c !== null).length;
     const intersectionScore = result.placedWords.reduce((acc, pw) => {
-      // Bonus por interseções
       return acc + countWordIntersections(result.grid, pw);
     }, 0);
 
-    const score = filledCells * 10 + intersectionScore;
+    // Bonus por balanceamento H/V
+    const hCount = result.placedWords.filter(p => p.direction === 'horizontal').length;
+    const vCount = result.placedWords.filter(p => p.direction === 'vertical').length;
+    const balanceBonus = Math.min(hCount, vCount) * 20;
+
+    const score = (filledCells * filledCells) + (intersectionScore * 5) + balanceBonus;
 
     if (!bestResult || score > bestResult.score) {
       bestResult = { ...result, score };
     }
 
-    // Se conseguiu colocar todas as palavras necessárias, para
-    if (result.placedWords.length >= targetTotal) {
+    // Se conseguiu alta densidade (>85% preenchido), para
+    const totalCells = width * height;
+    const density = filledCells / totalCells;
+    if (density > 0.85 && result.placedWords.length >= targetTotal * 0.8) {
       break;
     }
   }
@@ -81,11 +108,13 @@ export function generateCrossword(
   const totalCells = width * height;
   const filledCells = grid.flat().filter(c => c !== null).length;
   const blockCells = totalCells - filledCells;
+  const density = Math.round((filledCells / totalCells) * 100);
 
   console.log(`=== RESULTADO CRUZADA ===`);
   console.log(`Esperado: ${horizontalWords}H + ${verticalWords}V = ${targetTotal}`);
   console.log(`Obtido: ${hCount}H + ${vCount}V = ${hCount + vCount}`);
-  console.log(`Células: ${filledCells} letras, ${blockCells} blocos (${Math.round(blockCells/totalCells*100)}% blocos)`);
+  console.log(`Células: ${filledCells} letras, ${blockCells} blocos`);
+  console.log(`Densidade: ${density}% letras, ${100 - density}% blocos`);
 
   return buildCrosswordPuzzle(grid, placedWords, width, height, title, description);
 }
@@ -93,6 +122,7 @@ export function generateCrossword(
 /**
  * Tenta colocar palavras na grade
  * REGRA: Toda palavra (exceto a primeira) DEVE ter pelo menos uma interseção
+ * Estratégia: múltiplas passagens, alternando direções para balancear
  */
 function tryPlaceWords(
   wordsToPlace: { word: string; clue: string }[],
@@ -128,15 +158,58 @@ function tryPlaceWords(
     }
   }
 
+  // Coloca segunda palavra cruzando a primeira (vertical)
+  if (wordsToPlace.length > 1 && placedWords.length > 0) {
+    const firstPlaced = placedWords[0];
+    for (let i = 1; i < wordsToPlace.length; i++) {
+      const wordData = wordsToPlace[i];
+      if (usedWords.has(wordData.word)) continue;
+
+      // Tenta colocar verticalmente cruzando a primeira palavra
+      const allPlacements = findAllPlacements(grid, wordData.word, width, height);
+      const verticalWithIntersection = allPlacements.filter(p => p.direction === 'vertical' && p.intersections > 0);
+
+      if (verticalWithIntersection.length > 0) {
+        // Prefere cruzar no meio da primeira palavra
+        verticalWithIntersection.sort((a, b) => {
+          const distA = Math.abs(a.x - (firstPlaced.x + Math.floor(firstPlaced.word.length / 2)));
+          const distB = Math.abs(b.x - (firstPlaced.x + Math.floor(firstPlaced.word.length / 2)));
+          return distA - distB;
+        });
+
+        const chosen = verticalWithIntersection[0];
+        placeWord(grid, wordData.word, chosen.x, chosen.y, chosen.direction);
+        placedWords.push({
+          word: wordData.word,
+          clue: wordData.clue,
+          x: chosen.x,
+          y: chosen.y,
+          direction: chosen.direction,
+          id: wordId++,
+        });
+        usedWords.add(wordData.word);
+        break;
+      }
+    }
+  }
+
   // Coloca resto das palavras - OBRIGATÓRIO ter interseção
-  // Faz múltiplas passagens para tentar encaixar o máximo possível
+  // Faz MUITAS passagens (5) para maximizar preenchimento
   let lastPlacedCount = 0;
   let passes = 0;
-  const maxPasses = 3;
+  const maxPasses = 5;
+
+  // Alterna preferência de direção para balancear
+  let preferDirection: 'horizontal' | 'vertical' = 'horizontal';
 
   while (placedWords.length < targetTotal && passes < maxPasses) {
     passes++;
     lastPlacedCount = placedWords.length;
+
+    // Conta direções atuais para balancear
+    const hCount = placedWords.filter(p => p.direction === 'horizontal').length;
+    const vCount = placedWords.filter(p => p.direction === 'vertical').length;
+    preferDirection = hCount > vCount ? 'vertical' : 'horizontal';
 
     for (let i = 0; i < wordsToPlace.length && placedWords.length < targetTotal; i++) {
       const wordData = wordsToPlace[i];
@@ -147,7 +220,7 @@ function tryPlaceWords(
       // Busca TODAS as posições válidas
       const allPlacements = findAllPlacements(grid, wordData.word, width, height);
 
-      // FILTRA: APENAS posições COM interseção (exceto se for a primeira e não conseguiu colocar)
+      // FILTRA: APENAS posições COM interseção
       const withIntersection = allPlacements.filter(p => p.intersections > 0);
 
       // Se não há posição com interseção, PULA esta palavra (tenta na próxima passagem)
@@ -155,12 +228,16 @@ function tryPlaceWords(
         continue;
       }
 
-      // Ordena por número de interseções (mais é melhor)
-      withIntersection.sort((a, b) => b.intersections - a.intersections);
+      // Separa por direção preferida
+      const preferred = withIntersection.filter(p => p.direction === preferDirection);
+      const candidates = preferred.length > 0 ? preferred : withIntersection;
 
-      // Entre as melhores, escolhe aleatoriamente para variedade
-      const topScore = withIntersection[0].intersections;
-      const topCandidates = withIntersection.filter(p => p.intersections === topScore);
+      // Ordena por número de interseções (mais é melhor)
+      candidates.sort((a, b) => b.intersections - a.intersections);
+
+      // Entre as melhores (top 3), escolhe aleatoriamente para variedade
+      const topScore = candidates[0].intersections;
+      const topCandidates = candidates.filter(p => p.intersections >= topScore - 1).slice(0, 3);
       const chosen = topCandidates[Math.floor(Math.random() * topCandidates.length)];
 
       placeWord(grid, wordData.word, chosen.x, chosen.y, chosen.direction);
