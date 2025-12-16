@@ -1,15 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import ConfigForm, { SourceType } from '@/components/ConfigForm';
 import WordList from '@/components/WordList';
 import CrosswordPreview from '@/components/CrosswordPreview';
 import WordSearchPreview from '@/components/WordSearchPreview';
+import SudokuPreview from '@/components/SudokuPreview';
+import SoletraPreview from '@/components/SoletraPreview';
 import PuzzleHistory from '@/components/PuzzleHistory';
 import { usePuzzleHistory } from '@/hooks/usePuzzleHistory';
 import { generateCrossword } from '@/lib/generators/crossword';
 import { generateWordSearch } from '@/lib/generators/wordsearch';
+import { generateSudoku } from '@/lib/generators/sudoku';
+import { generateSoletra } from '@/lib/generators/soletra';
 import { downloadJson, copyJsonToClipboard, generateSlug } from '@/lib/export';
 import {
   GameType,
@@ -17,16 +23,33 @@ import {
   GeneratedWord,
   CrosswordPuzzle,
   WordSearchPuzzle,
+  SudokuPuzzle,
+  SoletraPuzzle,
   GRID_CONFIGS,
   GAME_TYPE_LABELS,
   PuzzleHistoryItem,
 } from '@/types';
+import { SavedGame } from '@/lib/games';
 
 type Step = 'config' | 'words' | 'preview';
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // Redireciona para login se não autenticado
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
   // Estado do fluxo
   const [step, setStep] = useState<Step>('config');
+
+  // ID do jogo sendo editado (se carregado de rascunho)
+  const [editingGameId, setEditingGameId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Configuracao
   const [gameType, setGameType] = useState<GameType>('crossword');
@@ -50,7 +73,7 @@ export default function Home() {
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
   // Puzzle gerado
-  const [puzzle, setPuzzle] = useState<CrosswordPuzzle | WordSearchPuzzle | null>(null);
+  const [puzzle, setPuzzle] = useState<CrosswordPuzzle | WordSearchPuzzle | SudokuPuzzle | SoletraPuzzle | null>(null);
   const [showAnswers, setShowAnswers] = useState(false);
   const [isFree, setIsFree] = useState(false);
 
@@ -61,12 +84,69 @@ export default function Home() {
   // Historico
   const { history, addToHistory, updateItem, deleteItem, isLoaded } = usePuzzleHistory();
 
-  // Gera palavras
+  // Carrega jogo do localStorage se veio da página /jogos
+  useEffect(() => {
+    const savedGame = localStorage.getItem('continue-game');
+    if (savedGame) {
+      try {
+        const game: SavedGame = JSON.parse(savedGame);
+        setEditingGameId(game.id);
+        setGameType(game.gameType);
+        setDifficulty(game.difficulty);
+        setTitle(game.title);
+        setTheme(game.theme);
+        setDescription(game.description || '');
+        setWords(game.words || []);
+        if (game.puzzle) {
+          setPuzzle(game.puzzle);
+          setStep('preview');
+        } else if (game.words?.length > 0) {
+          setStep('words');
+        }
+        localStorage.removeItem('continue-game');
+      } catch (e) {
+        console.error('Erro ao carregar jogo:', e);
+      }
+    }
+  }, []);
+
+  // Salva rascunho (com feedback visual)
+  const handleSaveDraft = async () => {
+    if (!session?.user) {
+      setError('Você precisa estar logado para salvar rascunhos');
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    const success = await saveAsDraft();
+    setIsSaving(false);
+
+    if (success) {
+      alert('Jogo salvo com sucesso!');
+    } else {
+      setError('Erro ao salvar jogo');
+    }
+  };
+
+  // Gera palavras (ou puzzle diretamente para Sudoku)
   const handleGenerate = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Sudoku é gerado localmente sem precisar de IA
+      if (gameType === 'sudoku') {
+        const sudokuTitle = title || `Sudoku ${GAME_TYPE_LABELS[gameType]}`;
+        const sudokuPuzzle = generateSudoku(difficulty, sudokuTitle);
+        setPuzzle(sudokuPuzzle);
+        addToHistory(sudokuPuzzle, gameType, difficulty, sudokuTitle, '');
+        setStep('preview');
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -224,18 +304,32 @@ export default function Home() {
   };
 
   // Gera o puzzle final
-  const handleCreatePuzzle = () => {
+  const handleCreatePuzzle = async () => {
     const config = GRID_CONFIGS[gameType][difficulty];
 
-    let newPuzzle: CrosswordPuzzle | WordSearchPuzzle;
+    let newPuzzle: CrosswordPuzzle | WordSearchPuzzle | SoletraPuzzle | null;
 
     if (gameType === 'crossword') {
       const crosswordDescription = `${GAME_TYPE_LABELS[gameType]} sobre ${theme || title}`;
       newPuzzle = generateCrossword(words, config, crosswordDescription, title);
-    } else {
+    } else if (gameType === 'wordsearch') {
       // Para caça-palavras, usa a descrição educativa ou fallback
       const wordsearchDescription = description || `Encontre as palavras relacionadas ao tema "${theme || title}".`;
       newPuzzle = generateWordSearch(words, config, wordsearchDescription, title);
+    } else if (gameType === 'soletra') {
+      // Para Soletra, usa IA para escolher letras e palavras do dicionário
+      setIsLoading(true);
+      try {
+        newPuzzle = await generateSoletra(words, difficulty, title, theme);
+        if (!newPuzzle) {
+          setError('Não foi possível gerar o Soletra. Tente um tema diferente.');
+          return;
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      return; // Sudoku já é tratado em handleGenerate
     }
 
     setPuzzle(newPuzzle);
@@ -272,13 +366,53 @@ export default function Home() {
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  // Volta para etapa anterior
-  const handleBack = () => {
+  // Volta para etapa anterior (salva rascunho automaticamente se tiver palavras)
+  const handleBack = async () => {
     if (step === 'words') {
+      // Salva automaticamente como rascunho se tiver palavras e usuário logado
+      if (session?.user && words.length > 0) {
+        await saveAsDraft();
+      }
       setStep('config');
     } else if (step === 'preview') {
-      setStep('words');
+      // Sudoku não tem etapa de palavras, volta direto para config
+      if (gameType === 'sudoku') {
+        setStep('config');
+      } else {
+        setStep('words');
+      }
       setPuzzle(null);
+    }
+  };
+
+  // Função interna para salvar rascunho (sem alert) - retorna true se sucesso
+  const saveAsDraft = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingGameId,
+          title: title || 'Sem título',
+          theme,
+          gameType,
+          difficulty,
+          status: puzzle ? 'complete' : 'draft',
+          words,
+          description,
+          puzzle,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.game?.id) {
+        setEditingGameId(data.game.id);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Erro ao salvar rascunho:', err);
+      return false;
     }
   };
 
@@ -296,10 +430,31 @@ export default function Home() {
     setDocumentText(null);
     setDocumentName(null);
     setDescription('');
+    setEditingGameId(null); // Limpa o ID para criar novo jogo
   };
 
   const selectedWordCount = words.filter((w) => w.selected).length;
   const config = GRID_CONFIGS[gameType][difficulty];
+
+  // Mostra loading enquanto verifica sessão
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-[#E5E5E5] flex items-center justify-center">
+        <div className="text-center">
+          <svg className="w-8 h-8 animate-spin text-[#7B9E89] mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p className="text-neutral-500">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Não renderiza nada enquanto redireciona
+  if (status === 'unauthenticated') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#E5E5E5] flex flex-col">
@@ -510,6 +665,37 @@ export default function Home() {
                   >
                     Voltar
                   </button>
+
+                  {/* Botão Salvar Rascunho */}
+                  {session?.user && (
+                    <button
+                      onClick={handleSaveDraft}
+                      disabled={isSaving || words.length === 0}
+                      className={`px-4 py-2 font-medium transition-all flex items-center gap-2 ${
+                        isSaving || words.length === 0
+                          ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                          : 'border border-[#D4A843] text-[#D4A843] hover:bg-[#D4A843]/10'
+                      }`}
+                    >
+                      {isSaving ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                          </svg>
+                          Salvar Rascunho
+                        </>
+                      )}
+                    </button>
+                  )}
+
                   <button
                     onClick={handleCreatePuzzle}
                     disabled={selectedWordCount < config.minWords}
@@ -536,9 +722,19 @@ export default function Home() {
                 puzzle={puzzle as CrosswordPuzzle}
                 showAnswers={showAnswers}
               />
-            ) : (
+            ) : gameType === 'wordsearch' ? (
               <WordSearchPreview
                 puzzle={puzzle as WordSearchPuzzle}
+                showAnswers={showAnswers}
+              />
+            ) : gameType === 'sudoku' ? (
+              <SudokuPreview
+                puzzle={puzzle as SudokuPuzzle}
+                showAnswers={showAnswers}
+              />
+            ) : (
+              <SoletraPreview
+                puzzle={puzzle as SoletraPuzzle}
                 showAnswers={showAnswers}
               />
             )}
@@ -569,13 +765,44 @@ export default function Home() {
                 </div>
 
                 {/* Botoes de acao */}
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   <button
                     onClick={handleBack}
                     className="px-4 py-2 text-neutral-600 hover:text-neutral-900 font-medium transition-colors"
                   >
                     Voltar
                   </button>
+
+                  {/* Botão Salvar */}
+                  {session?.user && (
+                    <button
+                      onClick={handleSaveDraft}
+                      disabled={isSaving}
+                      className={`px-4 py-2 font-medium transition-all flex items-center gap-2 ${
+                        isSaving
+                          ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                          : 'border border-[#D4A843] text-[#D4A843] hover:bg-[#D4A843]/10'
+                      }`}
+                    >
+                      {isSaving ? (
+                        <>
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                          </svg>
+                          Salvar
+                        </>
+                      )}
+                    </button>
+                  )}
+
                   <button
                     onClick={handleCopy}
                     className="px-4 py-2 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 font-medium transition-colors flex items-center gap-2"

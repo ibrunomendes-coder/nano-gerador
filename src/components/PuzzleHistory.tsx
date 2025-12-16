@@ -8,6 +8,8 @@ import {
   DIFFICULTY_LABELS,
   CrosswordPuzzle,
   WordSearchPuzzle,
+  SudokuPuzzle,
+  SoletraPuzzle,
 } from '@/types';
 import { downloadJson, copyJsonToClipboard } from '@/lib/export';
 
@@ -47,10 +49,13 @@ export default function PuzzleHistory({
   };
 
   const handleDownloadJson = (item: PuzzleHistoryItem) => {
-    const filename = item.gameType === 'crossword'
-      ? `cruzada_${item.id}`
-      : `cacapalavras_${item.id}`;
-    downloadJson(item.puzzle, item.gameType, filename);
+    const filenames: Record<GameType, string> = {
+      crossword: `cruzada_${item.id}`,
+      wordsearch: `cacapalavras_${item.id}`,
+      sudoku: `sudoku_${item.id}`,
+      soletra: `soletra_${item.id}`,
+    };
+    downloadJson(item.puzzle, item.gameType, filenames[item.gameType]);
   };
 
   const formatDate = (isoDate: string) => {
@@ -64,11 +69,20 @@ export default function PuzzleHistory({
     });
   };
 
-  const getWordCount = (puzzle: CrosswordPuzzle | WordSearchPuzzle, gameType: GameType) => {
+  const getWordCount = (puzzle: CrosswordPuzzle | WordSearchPuzzle | SudokuPuzzle | SoletraPuzzle, gameType: GameType) => {
     if (gameType === 'crossword') {
       return (puzzle as CrosswordPuzzle).word?.length || 0;
     }
-    return (puzzle as WordSearchPuzzle).suggestions?.length || 0;
+    if (gameType === 'wordsearch') {
+      return (puzzle as WordSearchPuzzle).suggestions?.length || 0;
+    }
+    if (gameType === 'sudoku') {
+      return (puzzle as SudokuPuzzle).clueCount || 0;
+    }
+    if (gameType === 'soletra') {
+      return (puzzle as SoletraPuzzle).validWords?.length || 0;
+    }
+    return 0;
   };
 
   return (
@@ -87,11 +101,15 @@ export default function PuzzleHistory({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
-                    className={`px-2 py-0.5 text-xs font-medium ${
-                      item.gameType === 'crossword'
-                        ? 'bg-[#E8B4B4] text-neutral-800'
-                        : 'bg-[#D4A843] text-neutral-800'
-                    }`}
+                    className="px-2 py-0.5 text-xs font-medium text-neutral-800"
+                    style={{
+                      backgroundColor: {
+                        crossword: '#E8B4B4',
+                        wordsearch: '#D4A843',
+                        sudoku: '#7B9E89',
+                        soletra: '#C5E0DC',
+                      }[item.gameType],
+                    }}
                   >
                     {GAME_TYPE_LABELS[item.gameType]}
                   </span>
@@ -99,7 +117,7 @@ export default function PuzzleHistory({
                     {DIFFICULTY_LABELS[item.difficulty]}
                   </span>
                   <span className="text-xs text-neutral-500">
-                    {getWordCount(item.puzzle, item.gameType)} palavras
+                    {getWordCount(item.puzzle, item.gameType)} {item.gameType === 'sudoku' ? 'pistas' : 'palavras'}
                   </span>
                 </div>
 

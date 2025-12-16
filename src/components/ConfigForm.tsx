@@ -73,6 +73,9 @@ export default function ConfigForm({
   const canGenerate = () => {
     if (!title.trim()) return false;
 
+    // Sudoku só precisa do título
+    if (gameType === 'sudoku') return true;
+
     switch (sourceType) {
       case 'gemini':
         return theme.trim().length > 0;
@@ -94,25 +97,39 @@ export default function ConfigForm({
         <label className="block text-sm font-medium text-neutral-700 mb-3">
           Tipo de Jogo
         </label>
-        <div className="grid grid-cols-2 gap-4">
-          {(Object.keys(GAME_TYPE_LABELS) as GameType[]).map((type) => (
-            <button
-              key={type}
-              onClick={() => setGameType(type)}
-              className={`p-6 border-2 transition-all ${
-                gameType === type
-                  ? type === 'crossword'
-                    ? 'border-[#E8B4B4] bg-[#E8B4B4]/20'
-                    : 'border-[#D4A843] bg-[#D4A843]/20'
-                  : 'border-neutral-200 hover:border-neutral-300'
-              }`}
-            >
-              <div className="text-2xl mb-2 text-neutral-700">
-                {type === 'crossword' ? '+' : '#'}
-              </div>
-              <div className="font-medium text-neutral-900">{GAME_TYPE_LABELS[type]}</div>
-            </button>
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {(Object.keys(GAME_TYPE_LABELS) as GameType[]).map((type) => {
+            const colors: Record<GameType, string> = {
+              crossword: '#E8B4B4',
+              wordsearch: '#D4A843',
+              sudoku: '#7B9E89',
+              soletra: '#C5E0DC',
+            };
+            const icons: Record<GameType, string> = {
+              crossword: '+',
+              wordsearch: '#',
+              sudoku: '9',
+              soletra: '🐝',
+            };
+            return (
+              <button
+                key={type}
+                onClick={() => setGameType(type)}
+                className={`p-6 border-2 transition-all ${
+                  gameType === type
+                    ? `border-[${colors[type]}] bg-[${colors[type]}]/20`
+                    : 'border-neutral-200 hover:border-neutral-300'
+                }`}
+                style={gameType === type ? {
+                  borderColor: colors[type],
+                  backgroundColor: `${colors[type]}33`,
+                } : undefined}
+              >
+                <div className="text-2xl mb-2 text-neutral-700">{icons[type]}</div>
+                <div className="font-medium text-neutral-900">{GAME_TYPE_LABELS[type]}</div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -148,11 +165,13 @@ export default function ConfigForm({
         </h3>
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
-            <span className="text-neutral-500">Tamanho:</span>{' '}
-            <span className="font-medium text-neutral-900">{config.width} x {config.height}</span>
+            <span className="text-neutral-500">{gameType === 'soletra' ? 'Letras:' : 'Tamanho:'}</span>{' '}
+            <span className="font-medium text-neutral-900">
+              {gameType === 'soletra' ? '7 (1 central + 6)' : `${config.width} x ${config.height}`}
+            </span>
           </div>
           <div>
-            <span className="text-neutral-500">Palavras:</span>{' '}
+            <span className="text-neutral-500">{gameType === 'sudoku' ? 'Pistas:' : gameType === 'soletra' ? 'Palavras válidas:' : 'Palavras:'}</span>{' '}
             <span className="font-medium text-neutral-900">{config.minWords} - {config.maxWords}</span>
           </div>
           <div>
@@ -176,51 +195,55 @@ export default function ConfigForm({
         />
       </div>
 
-      {/* Fonte das Palavras */}
-      <div>
-        <label className="block text-sm font-medium text-neutral-700 mb-3">
-          Fonte das Palavras
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          {SOURCE_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setSourceType(option.value)}
-              disabled={option.value !== 'gemini' && !documentText && option.value === 'document'}
-              className={`p-4 border-2 transition-all text-left ${
-                sourceType === option.value
-                  ? 'border-[#7B9E89] bg-[#7B9E89]/10'
-                  : 'border-neutral-200 hover:border-neutral-300'
-              } ${option.value !== 'gemini' && !documentText && option.value === 'document' ? 'opacity-50' : ''}`}
-            >
-              <div className="font-medium text-neutral-900 text-sm">{option.label}</div>
-              <div className="text-xs text-neutral-500 mt-1">{option.description}</div>
-            </button>
-          ))}
+      {/* Fonte das Palavras - não mostrar para Sudoku */}
+      {gameType !== 'sudoku' && (
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-3">
+            Fonte das Palavras
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {SOURCE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setSourceType(option.value)}
+                disabled={option.value !== 'gemini' && !documentText && option.value === 'document'}
+                className={`p-4 border-2 transition-all text-left ${
+                  sourceType === option.value
+                    ? 'border-[#7B9E89] bg-[#7B9E89]/10'
+                    : 'border-neutral-200 hover:border-neutral-300'
+                } ${option.value !== 'gemini' && !documentText && option.value === 'document' ? 'opacity-50' : ''}`}
+              >
+                <div className="font-medium text-neutral-900 text-sm">{option.label}</div>
+                <div className="text-xs text-neutral-500 mt-1">{option.description}</div>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Upload de Documento */}
-      <div>
-        <label className="block text-sm font-medium text-neutral-700 mb-2">
-          Documento Base <span className="text-neutral-400 font-normal">(opcional)</span>
-        </label>
-        <DocumentUpload
-          onDocumentProcessed={handleDocumentProcessed}
-          onRemove={handleRemoveDocument}
-          fileName={documentName}
-          isProcessing={false}
-          setIsProcessing={() => {}}
-        />
-        {documentText && (
-          <p className="mt-2 text-xs text-neutral-500">
-            {documentText.length.toLocaleString()} caracteres extraídos
-          </p>
-        )}
-      </div>
+      {/* Upload de Documento - não mostrar para Sudoku */}
+      {gameType !== 'sudoku' && (
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-2">
+            Documento Base <span className="text-neutral-400 font-normal">(opcional)</span>
+          </label>
+          <DocumentUpload
+            onDocumentProcessed={handleDocumentProcessed}
+            onRemove={handleRemoveDocument}
+            fileName={documentName}
+            isProcessing={false}
+            setIsProcessing={() => {}}
+          />
+          {documentText && (
+            <p className="mt-2 text-xs text-neutral-500">
+              {documentText.length.toLocaleString()} caracteres extraídos
+            </p>
+          )}
+        </div>
+      )}
 
-      {/* Tema - apenas se usar Gemini */}
-      {(sourceType === 'gemini' || sourceType === 'both') && (
+      {/* Tema - apenas se usar Gemini e não for Sudoku */}
+      {gameType !== 'sudoku' && (sourceType === 'gemini' || sourceType === 'both') && (
         <div>
           <label className="block text-sm font-medium text-neutral-700 mb-2">
             Tema para geracao de palavras
@@ -239,6 +262,27 @@ export default function ConfigForm({
             rows={3}
             className="w-full px-4 py-3 bg-white border border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#7B9E89] focus:border-transparent transition-colors resize-none"
           />
+        </div>
+      )}
+
+      {/* Info especial para Sudoku */}
+      {gameType === 'sudoku' && (
+        <div className="bg-[#7B9E89]/10 border border-[#7B9E89]/30 p-4">
+          <p className="text-sm text-neutral-700">
+            <strong>Sudoku</strong> é gerado automaticamente usando algoritmos matemáticos.
+            Não requer tema ou palavras - apenas selecione a dificuldade desejada.
+          </p>
+        </div>
+      )}
+
+      {/* Info especial para Soletra */}
+      {gameType === 'soletra' && (
+        <div className="bg-[#C5E0DC]/30 border border-[#8BBDB5]/50 p-4">
+          <p className="text-sm text-neutral-700">
+            <strong>Soletra</strong> (estilo Spelling Bee): 7 letras formam um hexágono.
+            A letra central deve aparecer em todas as palavras. Gere um tema com bastante
+            variedade de palavras para melhores resultados.
+          </p>
         </div>
       )}
 
@@ -270,10 +314,14 @@ export default function ConfigForm({
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            {sourceType === 'document' ? 'Extraindo palavras...' : 'Gerando com Gemini...'}
+            {gameType === 'sudoku'
+              ? 'Gerando Sudoku...'
+              : sourceType === 'document'
+              ? 'Extraindo palavras...'
+              : 'Gerando com Gemini...'}
           </span>
         ) : (
-          'Gerar Palavras'
+          gameType === 'sudoku' ? 'Gerar Sudoku' : 'Gerar Palavras'
         )}
       </button>
     </div>

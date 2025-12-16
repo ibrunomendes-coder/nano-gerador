@@ -1,4 +1,4 @@
-import { CrosswordPuzzle, WordSearchPuzzle, GameType } from '@/types';
+import { CrosswordPuzzle, WordSearchPuzzle, SudokuPuzzle, SoletraPuzzle, GameType } from '@/types';
 
 /**
  * Gera o slug a partir do titulo
@@ -16,9 +16,10 @@ export function generateSlug(title: string): string {
  * Formata o JSON para exportacao (compatível com coquetel-online)
  * - Cruzadas: array com 1 elemento (formato esperado)
  * - Caça-palavras: objeto único
+ * - Sudoku: objeto único
  */
 export function formatPuzzleForExport(
-  puzzle: CrosswordPuzzle | WordSearchPuzzle,
+  puzzle: CrosswordPuzzle | WordSearchPuzzle | SudokuPuzzle | SoletraPuzzle,
   gameType: GameType,
   isFree: boolean = false
 ): string {
@@ -26,7 +27,7 @@ export function formatPuzzleForExport(
     // Cruzadas: coquetel-online espera um array com o puzzle
     return JSON.stringify([puzzle], null, 2);
   } else {
-    // Caça-palavras: objeto único
+    // Caça-palavras, Sudoku e Soletra: objeto único
     return JSON.stringify(puzzle, null, 2);
   }
 }
@@ -35,7 +36,7 @@ export function formatPuzzleForExport(
  * Faz download do arquivo JSON
  */
 export function downloadJson(
-  puzzle: CrosswordPuzzle | WordSearchPuzzle,
+  puzzle: CrosswordPuzzle | WordSearchPuzzle | SudokuPuzzle | SoletraPuzzle,
   gameType: GameType,
   filename: string,
   isFree: boolean = false
@@ -57,7 +58,7 @@ export function downloadJson(
  * Copia JSON para clipboard
  */
 export async function copyJsonToClipboard(
-  puzzle: CrosswordPuzzle | WordSearchPuzzle,
+  puzzle: CrosswordPuzzle | WordSearchPuzzle | SudokuPuzzle | SoletraPuzzle,
   gameType: GameType,
   isFree: boolean = false
 ): Promise<boolean> {

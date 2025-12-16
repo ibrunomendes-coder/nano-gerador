@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { PuzzleHistoryItem, GameType, Difficulty, CrosswordPuzzle, WordSearchPuzzle } from '@/types';
+import { PuzzleHistoryItem, GameType, Difficulty, CrosswordPuzzle, WordSearchPuzzle, SudokuPuzzle, SoletraPuzzle } from '@/types';
 
 const STORAGE_KEY = 'nano-gerador-history';
 
@@ -48,16 +48,22 @@ export function usePuzzleHistory() {
   // Adiciona item ao histórico
   const addToHistory = useCallback(
     (
-      puzzle: CrosswordPuzzle | WordSearchPuzzle,
+      puzzle: CrosswordPuzzle | WordSearchPuzzle | SudokuPuzzle | SoletraPuzzle,
       gameType: GameType,
       difficulty: Difficulty,
       title: string,
       theme: string
     ) => {
-      const wordCount =
-        gameType === 'crossword'
-          ? (puzzle as CrosswordPuzzle).word?.length || 0
-          : (puzzle as WordSearchPuzzle).suggestions?.length || 0;
+      let wordCount = 0;
+      if (gameType === 'crossword') {
+        wordCount = (puzzle as CrosswordPuzzle).word?.length || 0;
+      } else if (gameType === 'wordsearch') {
+        wordCount = (puzzle as WordSearchPuzzle).suggestions?.length || 0;
+      } else if (gameType === 'sudoku') {
+        wordCount = (puzzle as SudokuPuzzle).clueCount || 0;
+      } else if (gameType === 'soletra') {
+        wordCount = (puzzle as SoletraPuzzle).validWords?.length || 0;
+      }
 
       const newItem: PuzzleHistoryItem = {
         id: generateId(),
@@ -113,6 +119,8 @@ export function usePuzzleHistory() {
     published: history.filter((i) => i.isPublished).length,
     crosswords: history.filter((i) => i.gameType === 'crossword').length,
     wordsearches: history.filter((i) => i.gameType === 'wordsearch').length,
+    sudokus: history.filter((i) => i.gameType === 'sudoku').length,
+    soletras: history.filter((i) => i.gameType === 'soletra').length,
   };
 
   return {

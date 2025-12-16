@@ -1,0 +1,863 @@
+[
+  {
+    "id": "game_1765813268757_t61ea",
+    "title": "Vestibular de quimica",
+    "theme": "vestibular de quimica USP",
+    "gameType": "crossword",
+    "difficulty": "easy",
+    "status": "complete",
+    "words": [
+      {
+        "word": "ATOMO",
+        "clue": "Unidade básica da matéria",
+        "selected": true
+      },
+      {
+        "word": "REACAO",
+        "clue": "Transformação química",
+        "selected": true
+      },
+      {
+        "word": "ACIDO",
+        "clue": "Doador de protons",
+        "selected": true
+      },
+      {
+        "word": "BASE",
+        "clue": "Reage com acido",
+        "selected": true
+      },
+      {
+        "word": "MOLAR",
+        "clue": "Concentração em mol/L",
+        "selected": true
+      },
+      {
+        "word": "ENTALPIA",
+        "clue": "Varia em reações",
+        "selected": true
+      },
+      {
+        "word": "ELETRON",
+        "clue": "Carga negativa no átomo",
+        "selected": true
+      },
+      {
+        "word": "TITULACAO",
+        "clue": "Determina concentração",
+        "selected": true
+      },
+      {
+        "word": "SOLUCAO",
+        "clue": "Mistura homogenea",
+        "selected": true
+      },
+      {
+        "word": "ION",
+        "clue": "Atomo com carga",
+        "selected": true
+      },
+      {
+        "word": "OXIDO",
+        "clue": "Composto com oxigenio",
+        "selected": true
+      },
+      {
+        "word": "GAS",
+        "clue": "Estado da matéria",
+        "selected": true
+      },
+      {
+        "word": "NMR",
+        "clue": "Espectroscopia",
+        "selected": true
+      },
+      {
+        "word": "CALOR",
+        "clue": "Energia transferida",
+        "selected": true
+      }
+    ],
+    "description": "",
+    "puzzle": {
+      "metadata": {
+        "title": "Vestibular de quimica",
+        "creator": "nano passatempos",
+        "copyright": "2025 nano passatempos",
+        "description": "Cruzadas sobre vestibular de quimica USP"
+      },
+      "grid": {
+        "width": 9,
+        "height": 9,
+        "cell": [
+          {
+            "x": "1",
+            "y": "1",
+            "type": "block"
+          },
+          {
+            "x": "2",
+            "y": "1",
+            "type": "block"
+          },
+          {
+            "x": "3",
+            "y": "1",
+            "type": "block"
+          },
+          {
+            "x": "4",
+            "y": "1",
+            "type": "block"
+          },
+          {
+            "x": "5",
+            "y": "1",
+            "type": "block"
+          },
+          {
+            "x": "6",
+            "y": "1",
+            "type": "block"
+          },
+          {
+            "x": "7",
+            "y": "1",
+            "solution": "I"
+          },
+          {
+            "x": "8",
+            "y": "1",
+            "type": "block"
+          },
+          {
+            "x": "9",
+            "y": "1",
+            "solution": "A"
+          },
+          {
+            "x": "1",
+            "y": "2",
+            "type": "block"
+          },
+          {
+            "x": "2",
+            "y": "2",
+            "solution": "R"
+          },
+          {
+            "x": "3",
+            "y": "2",
+            "solution": "E"
+          },
+          {
+            "x": "4",
+            "y": "2",
+            "solution": "A"
+          },
+          {
+            "x": "5",
+            "y": "2",
+            "solution": "C"
+          },
+          {
+            "x": "6",
+            "y": "2",
+            "solution": "A"
+          },
+          {
+            "x": "7",
+            "y": "2",
+            "solution": "O"
+          },
+          {
+            "x": "8",
+            "y": "2",
+            "type": "block"
+          },
+          {
+            "x": "9",
+            "y": "2",
+            "solution": "T"
+          },
+          {
+            "x": "1",
+            "y": "3",
+            "type": "block"
+          },
+          {
+            "x": "2",
+            "y": "3",
+            "type": "block"
+          },
+          {
+            "x": "3",
+            "y": "3",
+            "solution": "L"
+          },
+          {
+            "x": "4",
+            "y": "3",
+            "type": "block"
+          },
+          {
+            "x": "5",
+            "y": "3",
+            "solution": "S"
+          },
+          {
+            "x": "6",
+            "y": "3",
+            "type": "block"
+          },
+          {
+            "x": "7",
+            "y": "3",
+            "solution": "N"
+          },
+          {
+            "x": "8",
+            "y": "3",
+            "type": "block"
+          },
+          {
+            "x": "9",
+            "y": "3",
+            "solution": "O"
+          },
+          {
+            "x": "1",
+            "y": "4",
+            "type": "block"
+          },
+          {
+            "x": "2",
+            "y": "4",
+            "type": "block"
+          },
+          {
+            "x": "3",
+            "y": "4",
+            "solution": "E"
+          },
+          {
+            "x": "4",
+            "y": "4",
+            "type": "block"
+          },
+          {
+            "x": "5",
+            "y": "4",
+            "solution": "O"
+          },
+          {
+            "x": "6",
+            "y": "4",
+            "type": "block"
+          },
+          {
+            "x": "7",
+            "y": "4",
+            "type": "block"
+          },
+          {
+            "x": "8",
+            "y": "4",
+            "solution": "G"
+          },
+          {
+            "x": "9",
+            "y": "4",
+            "solution": "M"
+          },
+          {
+            "x": "1",
+            "y": "5",
+            "solution": "T"
+          },
+          {
+            "x": "2",
+            "y": "5",
+            "solution": "I"
+          },
+          {
+            "x": "3",
+            "y": "5",
+            "solution": "T"
+          },
+          {
+            "x": "4",
+            "y": "5",
+            "solution": "U"
+          },
+          {
+            "x": "5",
+            "y": "5",
+            "solution": "L"
+          },
+          {
+            "x": "6",
+            "y": "5",
+            "solution": "A"
+          },
+          {
+            "x": "7",
+            "y": "5",
+            "solution": "C"
+          },
+          {
+            "x": "8",
+            "y": "5",
+            "solution": "A"
+          },
+          {
+            "x": "9",
+            "y": "5",
+            "solution": "O"
+          },
+          {
+            "x": "1",
+            "y": "6",
+            "solution": "N"
+          },
+          {
+            "x": "2",
+            "y": "6",
+            "solution": "M"
+          },
+          {
+            "x": "3",
+            "y": "6",
+            "solution": "R"
+          },
+          {
+            "x": "4",
+            "y": "6",
+            "type": "block"
+          },
+          {
+            "x": "5",
+            "y": "6",
+            "solution": "U"
+          },
+          {
+            "x": "6",
+            "y": "6",
+            "type": "block"
+          },
+          {
+            "x": "7",
+            "y": "6",
+            "type": "block"
+          },
+          {
+            "x": "8",
+            "y": "6",
+            "solution": "S"
+          },
+          {
+            "x": "9",
+            "y": "6",
+            "type": "block"
+          },
+          {
+            "x": "1",
+            "y": "7",
+            "type": "block"
+          },
+          {
+            "x": "2",
+            "y": "7",
+            "type": "block"
+          },
+          {
+            "x": "3",
+            "y": "7",
+            "solution": "O"
+          },
+          {
+            "x": "4",
+            "y": "7",
+            "type": "block"
+          },
+          {
+            "x": "5",
+            "y": "7",
+            "solution": "C"
+          },
+          {
+            "x": "6",
+            "y": "7",
+            "type": "block"
+          },
+          {
+            "x": "7",
+            "y": "7",
+            "type": "block"
+          },
+          {
+            "x": "8",
+            "y": "7",
+            "type": "block"
+          },
+          {
+            "x": "9",
+            "y": "7",
+            "type": "block"
+          },
+          {
+            "x": "1",
+            "y": "8",
+            "type": "block"
+          },
+          {
+            "x": "2",
+            "y": "8",
+            "solution": "E"
+          },
+          {
+            "x": "3",
+            "y": "8",
+            "solution": "N"
+          },
+          {
+            "x": "4",
+            "y": "8",
+            "solution": "T"
+          },
+          {
+            "x": "5",
+            "y": "8",
+            "solution": "A"
+          },
+          {
+            "x": "6",
+            "y": "8",
+            "solution": "L"
+          },
+          {
+            "x": "7",
+            "y": "8",
+            "solution": "P"
+          },
+          {
+            "x": "8",
+            "y": "8",
+            "solution": "I"
+          },
+          {
+            "x": "9",
+            "y": "8",
+            "solution": "A"
+          },
+          {
+            "x": "1",
+            "y": "9",
+            "solution": "A"
+          },
+          {
+            "x": "2",
+            "y": "9",
+            "solution": "C"
+          },
+          {
+            "x": "3",
+            "y": "9",
+            "solution": "I"
+          },
+          {
+            "x": "4",
+            "y": "9",
+            "solution": "D"
+          },
+          {
+            "x": "5",
+            "y": "9",
+            "solution": "O"
+          },
+          {
+            "x": "6",
+            "y": "9",
+            "type": "block"
+          },
+          {
+            "x": "7",
+            "y": "9",
+            "type": "block"
+          },
+          {
+            "x": "8",
+            "y": "9",
+            "type": "block"
+          },
+          {
+            "x": "9",
+            "y": "9",
+            "type": "block"
+          }
+        ]
+      },
+      "word": [
+        {
+          "id": "1",
+          "x": "7",
+          "y": "1-3"
+        },
+        {
+          "id": "2",
+          "x": "9",
+          "y": "1-5"
+        },
+        {
+          "id": "3",
+          "x": "2-7",
+          "y": "2"
+        },
+        {
+          "id": "4",
+          "x": "3",
+          "y": "2-8"
+        },
+        {
+          "id": "5",
+          "x": "5",
+          "y": "3-9"
+        },
+        {
+          "id": "6",
+          "x": "8",
+          "y": "4-6"
+        },
+        {
+          "id": "7",
+          "x": "1-9",
+          "y": "5"
+        },
+        {
+          "id": "8",
+          "x": "1-3",
+          "y": "6"
+        },
+        {
+          "id": "9",
+          "x": "2-9",
+          "y": "8"
+        },
+        {
+          "id": "10",
+          "x": "1-5",
+          "y": "9"
+        }
+      ],
+      "clues": [
+        {
+          "title": "Vertical",
+          "clue": [
+            {
+              "word": "4",
+              "number": "1",
+              "format": "7",
+              "value": "Carga negativa no átomo"
+            },
+            {
+              "word": "5",
+              "number": "2",
+              "format": "7",
+              "value": "Mistura homogenea"
+            },
+            {
+              "word": "1",
+              "number": "3",
+              "format": "3",
+              "value": "Atomo com carga"
+            },
+            {
+              "word": "6",
+              "number": "4",
+              "format": "3",
+              "value": "Estado da matéria"
+            },
+            {
+              "word": "2",
+              "number": "5",
+              "format": "5",
+              "value": "Unidade básica da matéria"
+            }
+          ]
+        },
+        {
+          "title": "Horizontal",
+          "clue": [
+            {
+              "word": "3",
+              "number": "I",
+              "format": "6",
+              "value": "Transformação química"
+            },
+            {
+              "word": "7",
+              "number": "II",
+              "format": "9",
+              "value": "Determina concentração"
+            },
+            {
+              "word": "8",
+              "number": "III",
+              "format": "3",
+              "value": "Espectroscopia"
+            },
+            {
+              "word": "9",
+              "number": "IV",
+              "format": "8",
+              "value": "Varia em reações"
+            },
+            {
+              "word": "10",
+              "number": "V",
+              "format": "5",
+              "value": "Doador de protons"
+            }
+          ]
+        }
+      ]
+    },
+    "createdBy": "bruno@coisadelivreiro.com.br",
+    "createdByName": "Bruno Mendes",
+    "isTested": false,
+    "isPublished": false,
+    "createdAt": "2025-12-15T15:41:08.757Z",
+    "updatedAt": "2025-12-15T15:41:08.757Z"
+  },
+  {
+    "id": "game_1765549483707_ddx0x",
+    "title": "Palavras diversas conhecidas e de uso comum",
+    "theme": "Palavras diversas conhecidas e de uso comum",
+    "gameType": "soletra",
+    "difficulty": "easy",
+    "status": "draft",
+    "words": [
+      {
+        "word": "CASA",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "ABRIGO",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "FRUTAS",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "LEGUMES",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "SAUDE",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "CHAVE",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "PORTA",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "LIVRO",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "TEMPO",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "SOL",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "LUA",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "AMOR",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "PAZ",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "ROUPA",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "AGUA",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "TREM",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "FESTA",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "JOGO",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "RISCO",
+        "clue": "",
+        "selected": true
+      },
+      {
+        "word": "NOME",
+        "clue": "",
+        "selected": true
+      }
+    ],
+    "description": "",
+    "puzzle": null,
+    "createdBy": "bruno@coisadelivreiro.com.br",
+    "createdByName": "Bruno Mendes",
+    "isTested": false,
+    "isPublished": false,
+    "createdAt": "2025-12-12T14:24:43.707Z",
+    "updatedAt": "2025-12-12T14:28:27.051Z"
+  },
+  {
+    "id": "game_1765408758477_b8ede",
+    "title": "A alegria em ficar de fora: Desafio 1 Fácil ",
+    "theme": "Crie palavras sobre desconexão, off tela e viver o real e agora. Sobre estado presente",
+    "gameType": "crossword",
+    "difficulty": "easy",
+    "status": "draft",
+    "words": [
+      {
+        "word": "ZEN",
+        "clue": "Estado de calma e atenção plena",
+        "selected": true
+      },
+      {
+        "word": "SER",
+        "clue": "Existir no momento atual",
+        "selected": true
+      },
+      {
+        "word": "PAZ",
+        "clue": "Ausência de agitação mental",
+        "selected": true
+      },
+      {
+        "word": "REDE",
+        "clue": "O que nos conecta... virtualmente",
+        "selected": true
+      },
+      {
+        "word": "TEMPO",
+        "clue": "Recurso precioso a ser aproveitado",
+        "selected": true
+      },
+      {
+        "word": "VIDA",
+        "clue": "O agora, em sua plenitude",
+        "selected": true
+      },
+      {
+        "word": "AQUI",
+        "clue": "Onde a presença se manifesta",
+        "selected": true
+      },
+      {
+        "word": "FOCO",
+        "clue": "Concentração no presente",
+        "selected": true
+      },
+      {
+        "word": "MENTE",
+        "clue": "Cultivar a calma da...",
+        "selected": true
+      },
+      {
+        "word": "FLUXO",
+        "clue": "Estar no... da atividade",
+        "selected": true
+      },
+      {
+        "word": "ATENCAO",
+        "clue": "Prestar... ao instante",
+        "selected": true
+      },
+      {
+        "word": "CONEXAO",
+        "clue": "Buscar a... interior",
+        "selected": true
+      },
+      {
+        "word": "SILENCIO",
+        "clue": "Onde a mente encontra descanso",
+        "selected": true
+      },
+      {
+        "word": "REALIDADE",
+        "clue": "O mundo tangível, além da tela",
+        "selected": true
+      },
+      {
+        "word": "PRESENCIAL",
+        "clue": "Estar no agora, sem telas.",
+        "selected": true
+      },
+      {
+        "word": "VIVENCIAR",
+        "clue": "Experimentar o momento presente.",
+        "selected": true
+      },
+      {
+        "word": "DESPLUGAR",
+        "clue": "Ato de se afastar da tecnologia.",
+        "selected": true
+      },
+      {
+        "word": "SENTIRAGORA",
+        "clue": "Perceber as sensações do presente.",
+        "selected": true
+      },
+      {
+        "word": "INTEGRACAO",
+        "clue": "União com o mundo real.",
+        "selected": true
+      }
+    ],
+    "description": "",
+    "puzzle": null,
+    "createdBy": "bruno@coisadelivreiro.com.br",
+    "createdByName": "Bruno Mendes",
+    "isTested": false,
+    "isPublished": false,
+    "createdAt": "2025-12-10T23:19:18.477Z",
+    "updatedAt": "2025-12-10T23:20:12.479Z"
+  }
+]
